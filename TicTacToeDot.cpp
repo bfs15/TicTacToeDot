@@ -1,48 +1,33 @@
+#include<iostream>
+#include<string>
+#include<map>
+
+
 #define TRUE  (1==1)
 #define FALSE (!TRUE)
 
 #define SIZE 3
 
-typedef enum Square{
-  O = -1,
-  B = 0,
-  X = 1
-};
-
 class State {
 public:
-  Square board[SIZE][SIZE];
+  string board;
   int moveCount;
-  Square turn;
-  int ended;
-  size_t hash;
+  char turn;
+  int won;
+  // size_t hash;
 
-  State(Square b[][], int moveCount, Square turn, int ended) :
+  State(string b, int moveCount, Square turn, int won) :
     moveCount(moveCount),
     turn(turn),
-    ended(ended)
+    won(won),
+    board(b)
   {
-    std::copy(std::begin(b), std::end(b), std::begin(board));
-    hash();
-
     // DEBUG
     for (std::vector<char>::const_iterator i = path.begin();
       i != path.end();
       ++i) {
       std::cout << *i << ' ';
     }
-  }
-
-  char* getString() {
-    char c[SIZE * SIZE];
-
-    for(int i; i<SIZE-1; i++){
-      for(int j; j<SIZE-1; j++){
-        c[(i * SIZE) + j] = board[i][j];
-      }
-    }
-
-    return c;
   }
 
   /**
@@ -59,46 +44,48 @@ public:
     ns.movedToWinState(x, y);
 
     // mark move
-    board[x][y] = ns.turn;
-    ns.hash();
+    board[(x * SIZE) + y] = ns.turn;
 
   	ns.moveCount++;
 
     // change player turn
-    ns.turn *= -1;
+    if (ns.turn == 'X') {
+      ns.turn = 'O';
+    } else {
+      ns.turn = 'X';
+    }
 
     return ns;
   }
 
-
   int movedToWinState(int x, int y) {
     // col
     for(int i = 0; i < SIZE; i++){
-      if(board[x][i] != turn)
+      if(board[(x * SIZE) + i] != turn)
         break;
     }
     if(i == SIZE-1){
-      ended = TRUE;
+      won = TRUE;
     }
 
     // row
     for(int i = 0; i < SIZE; i++){
-      if(board[i][y] != turn)
+      if(board[(i * SIZE) + y] != turn)
         break;
     }
     if(i == SIZE-1){
-      ended = TRUE;
+      won = TRUE;
     }
 
     // diag
     if(x == y){
     // move is on diag
       for(int i = 0; i < SIZE; i++){
-        if(board[i][i] != turn)
+        if(board[(i * SIZE) + i] != turn)
           break;
       }
       if(i == SIZE-1){
-        ended = TRUE;
+        won = TRUE;
       }
     }
 
@@ -106,108 +93,74 @@ public:
     if(x + y = SIZE - 1){
     // move is on anti diag
       for(int i = 0; i < SIZE; i++){
-        if(board[i][(SIZE-1)-i] != turn)
+        if(board[(i * SIZE) + (SIZE-1)-i] != turn)
           break;
       }
       if(i == SIZE-1){
-        ended = TRUE;
+        won = TRUE;
       }
     }
-  }
-
-  bool operator==(const State &s) const {
-    if ((turn != s.turn) ||
-      (moveCount != s.moveCount) ||
-      (hash != s.hash)) {
-      return FALSE;
-    }
-
-    for (size_t i = 0; i < SIZE; i++) {
-      for (size_t j = 0; j < SIZE; j++) {
-        if (board[i][j] != s.board[i][j]) {
-          return FALSE;
-        }
-      }
-    }
-
-    return TRUE;
-  }
-  bool operator<(const State &s) const {
-    return hash < s.hash;
-  }
-  bool operator!=(const Packet& p) const { return !(*this == p); }
-  bool operator> (const Packet& p) const { return p < *this; }
-  bool operator>=(const Packet& p) const { return !(*this < p); }
-  bool operator<=(const Packet& p) const { return !(p < *this); }
-
-  void hash() {
-    size_t hash = 0x3a7eb429; // Just some random seed value
-    for (int i = 0; i != 8; ++i)
-    {
-        for (int j = 0; j != 8; ++j)
-        {
-            hash = (hash >> 1) | (hash << (sizeof(size_t) * 8 - 1));
-            hash ^= k.a[i][j] * 0xee6b2807;
-        }
-    }
-    hash *= 0xee6b2807;
-    hash ^= hash >> 16;
   }
 };
 
 int main()
 {
   // declaration
+  std::map<string, State> stateM[SIZE];
+  std::map<string, State>::iterator it;
 
-  std::deque<State> stateQ[SIZE];
+  int startMoveCount = 2;
 
-  State currentState(
-    {
-      { B, B, B },
-      { O, B, B },
-      { B, X, B }
-    }, moveCount = 2, turn = X, ended = FALSE);
+  State currentState("...O...X.", moveCount = startMoveCount, turn = 'X', won = FALSE);
 
   // END declaration
 
-  stateQ[2].push_back(currentState);
+    // DEBUG
+    std::cout << stateM[currentState.board] << endl;
 
-  printf("graph TicTacToeMoves {\n");
+  stateM[currentState.board] = currentState;
 
+    // DEBUG
+    std::cout << stateM[currentState.board] << endl;
+    if (stateM[currentState.board] != null) {
+      std::cout << "TRUE" << endl;
+    } else {
+      std::cout << "FALSE" << endl;
+    }
 
-	// for (int i = 2; i < SIZE; i++) {
-	//   while (!stateQ[i].empty) {
-	//     currentState = stateQ.front();
-	//     stateQ.pop_front();
+  // start dot graph
+  std::cout << "graph TicTacToeMoves {" << endl;
+
+	// for (int i = startMoveCount; i < SIZE; i++) {
+  //   for (it = stateM[i].begin(); it != stateM[i].end(); it++) {
+  //     // currentState = it->second;
+	//     moveToPossibleStates(it->second, stateM[i+1]);
+  //   }
   //
-	//     moveToPossibleStates(currentState, stateQ[i+1]);
-	//   }
-  //
-	//   // remove repetitions
-	//   stateQ[i+1].sort();
-	//   // stateQ[i+1].unique();
-	// 	std::unique(stateQ[i+1].begin(), stateQ[i+1].end());
+  //   stateM[i].clear();
 	// }
-  //
-  // printf("}\n");
+
+  // end dot graph
+  std::cout << "}" << endl;
 
   return 0;
 }
 
-void moveToPossibleStates(State &currentState, std::deque<State> &stateQ){
+void moveToPossibleStates(State &currentState, std::map<string, State> &stateM){
   State movedS;
 
 	for(int i; i<SIZE-1; i++){
     for(int j; j<SIZE-1; j++){
-      if(currentState.board[i][j] == B){
+      if(currentState.board.at((i * SIZE) + j) == '.'){
         movedS = currentState.Move(i, j);
 
         // print in dot format
-        printf("\"%s\" -> \"%s\";\n",
-          currentState.getString(), movedS.getString());
+        std::cout << "\"" << currentState.board <<
+        "\" -> \"" << movedS.board << "\";" << endl;
 
-        if (!(movedS.ended)) {
-          stateQ.push_back(movedS);
+        // if game didn't end,
+        if (!(movedS.won) && !(stateM.count(movedS.board))) {
+          stateM[movedS.board] = movedS;
         }
       }
     }
