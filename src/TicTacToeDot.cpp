@@ -27,7 +27,7 @@ int main()
   stateM[startMoveCount][currentState.board] = currentState;
 
   // start dot graph
-  std::cout << "graph TicTacToeMoves {" << std::endl;
+  std::cout << "digraph TicTacToeMoves {" << std::endl;
 
 	for (int i = startMoveCount; i < SIZE*SIZE; i++) {
     for (it = stateM[i].begin(); it != stateM[i].end(); it++) {
@@ -53,7 +53,7 @@ void moveToPossibleStates(State &currentState, std::map<std::string, State> &sta
         movedS = currentState.Move(i, j);
 
         // print in dot format
-        std::cout << "\"" << currentState.board <<
+        std::cout << "\t\"" << currentState.board <<
         "\" -> \"" << movedS.board << "\";" << std::endl;
 
         // if game didn't end && not in the map already
